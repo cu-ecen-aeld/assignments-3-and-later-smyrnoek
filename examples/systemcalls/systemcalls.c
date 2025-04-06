@@ -1,4 +1,13 @@
 #include "systemcalls.h"
+#include <stdio.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <fcntl.h>
+#include <stdbool.h>
+
 
 /**
  * @param cmd the command to execute with system()
@@ -16,8 +25,15 @@ bool do_system(const char *cmd)
  *   and return a boolean true if the system() call completed with success
  *   or false() if it returned a failure
 */
+    if (cmd == NULL)
+        return false;  // we don't execute anything if the command is NULL
 
-    return true;
+    int ret = system(cmd);
+
+    if (ret == -1)
+        return false;
+
+    return true; //WIFEXITED(ret) && WEXITSTATUS(ret) == 0;
 }
 
 /**
@@ -42,12 +58,14 @@ bool do_exec(int count, ...)
     int i;
     for(i=0; i<count; i++)
     {
+        //Consume element of va_list and move to the next argument:
         command[i] = va_arg(args, char *);
     }
     command[count] = NULL;
     // this line is to avoid a compile warning before your implementation is complete
     // and may be removed
-    command[count] = command[count];
+    //command[count] = command[count];
+    va_end(args);
 
 /*
  * TODO:
@@ -58,10 +76,22 @@ bool do_exec(int count, ...)
  *   as second argument to the execv() command.
  *
 */
+    pid_t pid = fork();
+    if (pid == -1) {
+      return false;
+    }
+    else if (pid == 0) {
+      // We are inside ta child here:..
+      execv(command[0], command);
+      // Terminate the child..
+      exit(1);
+    }
 
-    va_end(args);
-
-    return true;
+    // Parent
+    int status;
+    wait(&status);
+        
+    return WIFEXITED(status) && WEXITSTATUS(status) == 0;
 }
 
 /**
@@ -77,12 +107,10 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
     int i;
     for(i=0; i<count; i++)
     {
-        command[i] = va_arg(args, char *);
+      command[i] = va_arg(args, char *);
     }
     command[count] = NULL;
-    // this line is to avoid a compile warning before your implementation is complete
-    // and may be removed
-    command[count] = command[count];
+    va_end(args);
 
 
 /*
@@ -92,8 +120,20 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
  *   The rest of the behaviour is same as do_exec()
  *
 */
-
-    va_end(args);
-
-    return true;
+    pid_t pid = fork();
+    if (pid == -1) {
+      return false;
+    }
+    else if (pid == 0) {
+      // Open file and redirect stdout to it:
+      int fd = open(outputfile, O_WRONLY|O_TRUNC|O_CREAT, 0644);
+      if (dup2(fd,1) < 0) return false;
+      close(fd); 
+      
+      execv(command[0], command);
+    }
+    // Wait for child to finish
+    int status = 0;
+    waitpid(pid, &status, 0);
+    return WIFEXITED(status) && WEXITSTATUS(status) == 0;
 }
