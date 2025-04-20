@@ -13,9 +13,9 @@ BUSYBOX_VERSION=1_33_1
 FINDER_APP_DIR=$(realpath $(dirname $0))
 ARCH=arm64
 CROSS_COMPILE=aarch64-none-linux-gnu-
-TOOLCHAIN_PATH=/home/oleksandr/UbuntuCourse/SystemProg/aarch_dev_toolchain
-ASSIGNMENT2_DIR=/home/oleksandr/UbuntuCourse/SystemProg/assignment-2-smyrnoek/finder-app
-ASSIGNMENT3_DIR=/home/oleksandr/UbuntuCourse/SystemProg/assignment-3-smyrnoek/finder-app
+TOOLCHAIN_PATH=$PWD/libdep
+ASSIGNMENT2_DIR=$PWD/Assignment2
+ASSIGNMENT3_DIR=$PWD
 
 export PATH=/home/oleksandr/UbuntuCourse/SystemProg/aarch_dev_toolchain/arm-gnu-toolchain-13.3.rel1-x86_64-aarch64-none-linux-gnu/bin:$PATH
 export CROSS_COMPILE=${CROSS_COMPILE}
@@ -56,8 +56,6 @@ echo "Adding the Image in outdir"
 # Copy the kernel image
 cd "$OUTDIR"/linux-stable
 cp arch/${ARCH}/boot/Image ${OUTDIR}/Image
-# Copy the device tree blobs (DTBs)
-# cp arch/${ARCH}/boot/dts/*.dtb ${OUTDIR}/
 
 echo "Creating the staging directory for the root filesystem"
 cd "$OUTDIR"
@@ -76,7 +74,7 @@ mkdir -p ${OUTDIR}/rootfs/var/log
 cd "$OUTDIR"
 if [ ! -d "${OUTDIR}/busybox" ]
 then
-git clone git://busybox.net/busybox.git
+git clone git://busybox.net/mirror/busybox.git
     cd busybox
     git checkout ${BUSYBOX_VERSION}
     # TODO:  Configure busybox
@@ -129,9 +127,9 @@ sudo mknod -m 600 ${OUTDIR}/rootfs/dev/console c 5 1
 
 # TODO: Clean and build the writer utility
 # Clean up old binaries and object files without changing directories
-make -C ${ASSIGNMENT2_DIR} clean
+# make -C ${ASSIGNMENT2_DIR} clean
 # Build the writer utility without changing directories
-make -C ${ASSIGNMENT2_DIR}
+# make -C ${ASSIGNMENT2_DIR}
 cp ${ASSIGNMENT2_DIR}/writer ${OUTDIR}/rootfs/home/
 
 # TODO: Copy the finder related scripts and executables to the /home directory
