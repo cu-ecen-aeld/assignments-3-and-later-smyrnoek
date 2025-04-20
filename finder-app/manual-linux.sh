@@ -74,7 +74,7 @@ mkdir -p ${OUTDIR}/rootfs/var/log
 cd "$OUTDIR"
 if [ ! -d "${OUTDIR}/busybox" ]
 then
-git clone git://busybox.net/mirror/busybox.git
+git clone https://github.com/mirror/busybox
     cd busybox
     git checkout ${BUSYBOX_VERSION}
     # TODO:  Configure busybox
